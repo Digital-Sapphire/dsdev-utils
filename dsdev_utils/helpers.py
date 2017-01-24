@@ -170,10 +170,10 @@ class Version(object):
         if release is None:
             self.release = 2
         # Convert to number for easy comparison and sorting
-        elif release == 'b' or release == 'beta':
+        elif release == '1' or release == 'b' or release == 'beta':
             self.release = 1
             self.channel = 'beta'
-        elif release == 'a' or release == 'alpha':
+        elif release == '0' or release == 'a' or release == 'alpha':
             self.release = 0
             self.channel = 'alpha'
         else:
