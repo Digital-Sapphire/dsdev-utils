@@ -127,6 +127,15 @@ class _LazyImport(object):
         return '_LazyImport: {}'.format(self._dsdev_lazy_name)
 
 
+# -*- coding: UTF-8 -*-
+"""
+Purpose:
+
+
+"""
+import os, re
+from jetCore.exceptions import VersionError
+
 # Normalizes version strings of different types. Examples
 # include 1.2, 1.2.1, 1.2b and 1.1.1b
 #
@@ -134,101 +143,116 @@ class _LazyImport(object):
 #
 #     version (str): Version number to normalizes
 class Version(object):
-
-    v_re = re.compile('(?P<major>\d+)\.(?P<minor>\d+)\.?(?P'
-                      '<patch>\d+)?-?(?P<release>[a,b,e,h,l'
-                      ',p,t]+)?-?(?P<releaseversion>\d+)?')
-
-    v_re_big = re.compile('(?P<major>\d+)\.(?P<minor>\d+)\.'
-                          '(?P<patch>\d+)\.(?P<release>\d+)'
-                          '\.(?P<releaseversion>\d+)')
+    channels = {'d': ('daily', 0), 'a': ('alpha', 1), 'b': ('beta', 2),
+                 'p': ('patch', 3), 'm': ('mandatory', 4), 'f': ('feature', 4),
+                 None: ('stable', 9), '': ('stable', 9)}
 
     def __init__(self, version):
-        self._parse_version_str(version)
-        self.version_str = None
+        self._version = None
+        self._channelID = None
+        self.major = None
+        self.minor = None
+        self.release = None
+        self.preRelease = None
+        self.build = None
+        self.revision = None
+        self.version = version
+        self.version_tuple = (self.major, self.minor, self.release, self.revision, self.channelNum)
+
+    @property
+    def version(self):
+        return self._version
+    @version.setter
+    def version(self, value):
+        if value is None:
+            self.major = 0
+            self.minor = 0
+            self.release = 0
+            self.revision = 0
+        else:
+            self._parse_version_str(value)
+        self._version = '{}.{}.{}'.format(self.major, self.minor, self.release)
+        if self.preRelease:
+            self._version = '{}-{}'.format(self._version, self.preRelease)
+        if self.build:
+            self._version = '{}-{}'.format(self._version, self.build)
+        return
+
+    @property
+    def channelNum(self):
+        if not self._channelID or self._channelID not in self.channels:
+            return self.channels[None][1]
+        return self.channels[self._channelID][1]
+
+    @property
+    def channel(self):
+        if not self._channelID or self._channelID not in self.channels:
+            return self.channels[None][0]
+        return self.channels[self._channelID][0]
+    @channel.setter
+    def channel(self, value):
+        if value is None:
+            self._channelID = None
+            return
+        self._channelID = value[:1]
+        return
 
     def _parse_version_str(self, version):
-        count = self._quick_sanatize(version)
+
+        ext = os.path.splitext(version)[1]
+        if ext == '.zip':
+            version = version[:-4]
+        elif ext == '.gz':
+            version = version[:-7]
+
         try:
-            # version in the form of 1.1, 1.1.1, 1.1.1-b1, 1.1.1a2
-            if count == 4:
-                version_data = self._parse_parsed_version(version)
+            _version_data = self._parse_version(version)
+            self.major = int(_version_data.get('MAJOR', 0))
+            self.minor = int(_version_data.get('MINOR', 0))
+            self.release = int(_version_data.get('RELEASE', 0) or 0)
+            self.preRelease = _version_data.get('prerelease')
+            self.build = _version_data.get('build', None)
+
+            if self.preRelease:
+                _pre_data = self._parse_prerelease(self.preRelease)
+                self.revision = int(_pre_data.get('revision', 0) or 0)
+                if _pre_data.get('subrevision'):
+                    self.revision = float('.'.join([str(self.revision), _pre_data.get('subrevision')]))
+                self.channel = _pre_data.get('channel') or _pre_data.get('name', None)
             else:
-                version_data = self._parse_version(version)
+                self.revision = 0
+                self.channel = None
         except AssertionError:
             raise VersionError('Cannot parse version')
 
-        self.major = int(version_data.get('major', 0))
-        self.minor = int(version_data.get('minor', 0))
-        patch = version_data.get('patch')
-        if patch is None:
-            self.patch = 0
-        else:
-            self.patch = int(patch)
-        release = version_data.get('release')
-        self.channel = 'stable'
-        if release is None:
-            self.release = 2
-        # Convert to number for easy comparison and sorting
-        elif release == 'b' or release == 'beta':
-            self.release = 1
-            self.channel = 'beta'
-        elif release == 'a' or release == 'alpha':
-            self.release = 0
-            self.channel = 'alpha'
-        else:
-            log.debug('Setting release as stable. '
-                      'Disregard if not prerelease')
-            # Marking release as stable
-            self.release = 2
-
-        release_version = version_data.get('releaseversion')
-        if release_version is None:
-            self.release_version = 0
-        else:
-            self.release_version = int(release_version)
-        self.version_tuple = (self.major, self.minor, self.patch,
-                              self.release, self.release_version)
-        self.version_str = str(self.version_tuple)
-
     def _parse_version(self, version):
-        r = self.v_re.search(version)
+        v_re = re.compile(r"(?P<MAJOR>0|(?:[1-9]\d*))"
+                          r"\.(?P<MINOR>0|(?:[1-9]\d*))"
+                          r"(?:\.(?P<RELEASE>0|(?:[1-9]\d*)))?"
+                          r"(?:-?(?P<prerelease>(?:0|(?:[1-9A-Za-z-][0-9A-Za-z-]*))(?:\.(?:0|(?:[1-9A-Za-z-][0-9A-Za-z-]*)))*))?"
+                          r"(?:\+(?P<build>(?:0|(?:[1-9A-Za-z-][0-9A-Za-z-]*))(?:\.(?:0|(?:[1-9A-Za-z-][0-9A-Za-z-]*)))*))?",
+                          re.IGNORECASE | re.VERBOSE)
+
+        r = v_re.search(version)
         assert r is not None
         return r.groupdict()
 
-    def _parse_parsed_version(self, version):
-        r = self.v_re_big.search(version)
+    def _parse_prerelease(self, prerelease):
+        pre_re = re.compile(r"^(?P<name>[a-zA-Z]+)?\.?(?P<revision>\d+)?(?:\.(?P<subrevision>\d+(?:\.?\d)*))?(?:\.?(?P<channel>[a-z]+))?$",
+                          re.IGNORECASE | re.VERBOSE)
+
+        r = pre_re.match(prerelease)
         assert r is not None
         return r.groupdict()
 
-    def _quick_sanatize(self, version):
-        log.debug('Version str: %s', version)
-        ext = os.path.splitext(version)[1]
-        # Removing file extensions, to ensure count isn't
-        # contaminated
-        if ext == '.zip':
-            log.debug('Removed ".zip"')
-            version = version[:-4]
-        elif ext == '.gz':
-            log.debug('Removed ".tar.gz"')
-            version = version[:-7]
-        count = version.count('.')
-        # There will be 4 dots when version is passed
-        # That was created with Version object.
-        # 1.1 once parsed will be 1.1.0.0.0
-        if count not in [1, 2, 4]:
-            msg = ('Incorrect version format. 1 or 2 dots '
-                   'You have {} dots'.format(count))
-            log.debug(msg)
-            raise VersionError(msg)
-        return count
+    def longname(self):
+        return "Major: {major} Minor: {minor} Release: {release} Revision: {revision} Channel: {channelName} Build {build}".format(**self.__dict__)
 
     def __str__(self):
-        return '.'.join(map(str, self.version_tuple))
+        return self._version
 
     def __repr__(self):
-        return '{}: {}'.format(self.__class__.__name__,
-                               self.version_str)
+        return '{}: {}'.format(self.__class__.__name__, self._version)
 
     def __hash__(self):
         return hash(self.version_tuple)
@@ -250,6 +274,15 @@ class Version(object):
 
     def __ge__(self, obj):
         return self.version_tuple >= obj.version_tuple
+
+if __name__ == '__main__':
+    ver = Version('0.0.1710a')
+    print ver.longname()
+    print Version('0.0.1710-50a').longname()
+    print Version('0.0.1710-50.1a').longname()
+    print Version('0.0.1710-50a+abcdef').longname()
+    print Version('0.0.1710-50.2a+abcdef').longname()
+    print Version('0.0.1710a+abcdef').longname()
 
 
 # Provides access to dict by pass a specially made key to
