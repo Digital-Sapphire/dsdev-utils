@@ -5,7 +5,7 @@ deploy: clean pypi
 	git push
 	git push --tags
 	twine upload dist/*
-	clean
+	python dev/clean.py
 
 deps:
 	pip install -r requirements.txt --upgrade

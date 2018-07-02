@@ -148,6 +148,7 @@ class Version(object):
                  None: ('stable', 9), '': ('stable', 9)}
 
     def __init__(self, version):
+<<<<<<< HEAD
         self._version = None
         self._channelID = None
         self.major = None
@@ -196,6 +197,11 @@ class Version(object):
             return
         self._channelID = value[:1]
         return
+=======
+        self.original_version = version
+        self._parse_version_str(version)
+        self.version_str = None
+>>>>>>> f94e7d27e0ace6f4b48ef053d7705ff5bdc10d40
 
     def _parse_version_str(self, version):
 
@@ -225,6 +231,42 @@ class Version(object):
         except AssertionError:
             raise VersionError('Cannot parse version')
 
+<<<<<<< HEAD
+=======
+        self.major = int(version_data.get('major', 0))
+        self.minor = int(version_data.get('minor', 0))
+        patch = version_data.get('patch')
+        if patch is None:
+            self.patch = 0
+        else:
+            self.patch = int(patch)
+        release = version_data.get('release')
+        self.channel = 'stable'
+        if release is None:
+            self.release = 2
+        # Convert to number for easy comparison and sorting
+        elif release in ['b', 'beta', '1']:
+            self.release = 1
+            self.channel = 'beta'
+        elif release in ['a', 'alpha', '0']:
+            self.release = 0
+            self.channel = 'alpha'
+        else:
+            log.debug('Setting release as stable. '
+                      'Disregard if not prerelease')
+            # Marking release as stable
+            self.release = 2
+
+        release_version = version_data.get('releaseversion')
+        if release_version is None:
+            self.release_version = 0
+        else:
+            self.release_version = int(release_version)
+        self.version_tuple = (self.major, self.minor, self.patch,
+                              self.release, self.release_version)
+        self.version_str = str(self.version_tuple)
+
+>>>>>>> f94e7d27e0ace6f4b48ef053d7705ff5bdc10d40
     def _parse_version(self, version):
         v_re = re.compile(r"(?P<MAJOR>0|(?:[1-9]\d*))"
                           r"\.(?P<MINOR>0|(?:[1-9]\d*))"
