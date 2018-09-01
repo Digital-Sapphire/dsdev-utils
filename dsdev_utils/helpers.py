@@ -26,10 +26,166 @@ import gzip
 import logging
 import sys
 
-from jetCore.version import Version
-from jetCore.exceptions import VersionError
-
 log = logging.getLogger(__name__)
+
+
+class Version(object):
+
+    def __init__(self, version=None):
+        self.pgm_name = None
+        self.major = None
+        self.minor = None
+        self.patch = None
+        self.channel_name = None
+        self.SHA = None
+        if version:
+            self.version = version
+        return
+
+    @property
+    def version(self):
+        _version = '{}'.format(self.major)
+        if self.patch:
+            _version = '{}.{}.{}{}'.format(_version, self.minor, self.patch, self.channel[:1])
+        elif self.minor:
+            _version = '{}.{}{}'.format(_version, self.minor, self.channel[:1])
+        return _version
+
+    @version.setter
+    def version(self, value):
+        if value is None:
+            self.major = 0
+            self.minor = 0
+            self.patch = None
+            self.channel_name = 'daily'
+            return
+        self._parse_string(value)
+        return
+
+    @property
+    def version_tuple(self):
+        return (self.major, self.minor, self.patch, channels[self.channel])
+
+    @property
+    def build_id(self):
+        if self.SHA is not None:
+            return '{}+{}'.format(self.version, self.SHA)
+        return self.version
+
+    @property
+    def channel(self):
+        return self.channel_name or 'stable'
+
+    @channel.setter
+    def channel(self, value):
+        if value is None:
+            self.channel_name = None
+            return
+        if value[:1].lower() in channel_id:
+            self.channel_name = channel_id[value[:1].lower()]
+        else:
+            self.channel_name = 'stable'
+        return
+
+    @property
+    def channel_id(self):
+        return self.channel[:1]
+
+    @channel_id.setter
+    def channel_id(self, value):
+        self.channel = value
+        return
+
+    @property
+    def channel_number(self):
+        if not self.channel_name:
+            return channels['stable']
+        return channels[self.channel_name]
+
+    def _parse_string(self, version):
+        version = Path(ver).stem
+        try:
+            _data = self._parse_version(version)
+            self.major = int(_data.get('MAJOR', 0) or 0)
+            self.minor = _data.get('MINOR', None)
+            self.patch = _data.get('PATCH', None)
+            self.channel = _data.get('CHANNEL', None)
+            self.pgm_name = _data.get('NAME', None)
+            self.SHA = _data.get('SHA', None)
+            if self.minor is not None:
+                self.minor = int(self.minor)
+            if self.patch is not None:
+                self.patch = int(self.patch)
+        except AssertionError:
+            log.error('Version: Cannot parse version string: {}'.format(version))
+            self.major = 0
+            self.minor = 0
+            self.patch = None
+            self.channel_name = 'daily'
+        return
+
+    def _parse_version(self, version):
+        v_re = re.compile(r"((?P<NAME>jetPy|jetRun)-win-)?"
+                          r"(?:[1-9]\.)?"
+                          r"(?:[1-9]\.)?"
+                          r"(?:(?P<MAJOR>(?:[0-9][0-9]\d\d)))"
+                          r"(?:[.|-](?P<MINOR>0|(?:[1-9]\d*)))?"
+                          r"(?:.(?P<PATCH>(?:0|(?:[1-9][0-9]*))))?"
+                          r"(?P<CHANNEL>(?:0|(?:[A-Za-z-]*)))?"
+                          r"(?:\+(?P<SHA>(?:0|(?:[1-9A-Za-z-][0-9A-Za-z-]*.*))))?",
+                          re.IGNORECASE | re.VERBOSE)
+        r = v_re.search(version)
+        assert r is not None
+        return r.groupdict()
+
+    def longname(self):
+        return "Monthly Release: {major} Minor: {minor} Patch: {patch} Channel: {channel_name}".format(**self.__dict__)
+
+    def __str__(self):
+        return self.version
+
+    def __repr__(self):
+        return '{}: {}'.format(self.__class__.__name__, self.version)
+
+    def __hash__(self):
+        return hash(self.version_tuple)
+
+    def __eq__(self, obj):
+        if not hasattr(obj, 'version_tuple'):
+            return str(self) == str(obj)
+        return self.version_tuple == obj.version_tuple
+
+    def __ne__(self, obj):
+        if not hasattr(obj, 'version_tuple'):
+            return str(self) != str(obj)
+        return self.version_tuple != obj.version_tuple
+
+    def __lt__(self, obj):
+        if not hasattr(obj, 'version_tuple'):
+            return str(self) < str(obj)
+        return self.version_tuple < obj.version_tuple
+
+    def __gt__(self, obj):
+        if not hasattr(obj, 'version_tuple'):
+            return str(self) > str(obj)
+        return self.version_tuple > obj.version_tuple
+
+    def __le__(self, obj):
+        if not hasattr(obj, 'version_tuple'):
+            return str(self) <= str(obj)
+        return self.version_tuple <= obj.version_tuple
+
+    def __ge__(self, obj):
+        if not hasattr(obj, 'version_tuple'):
+            return str(self) >= str(obj)
+        return self.version_tuple >= obj.version_tuple
+
+
+class VersionError(Exception):
+    """Raised when an Invalid Version Number is supplied
+    """
+    pass
+
 
 
 # Decompress gzip data
