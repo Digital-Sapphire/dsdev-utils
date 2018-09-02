@@ -1,20 +1,43 @@
+# Temporary and binary files
+*~
+*.py[cod]
+*.so
+*.cfg
+!setup.cfg
+!.bumpversion.cfg
+*.orig
+*.log
+*.pot
+__pycache__/*
+.cache/*
+.*.swp
+*/.ipynb_checkpoints/*
 
-*.pyc
+# Project files
+.ropeproject
+.project
+.pydevproject
+.settings
+.idea
 
+# Package files
 *.egg
+*.eggs/
+.installed.cfg
+*.egg-info
 
-.cache
-
+# Unittest and coverage
+htmlcov/*
 .coverage
+.tox
+junit.xml
+coverage.xml
 
-build
-
-cover
-
-dist
-
-hash-test.txt
-
-dsdev_utils.egg-info
-
-.idea/
+# Build and docs folder/files
+build/*
+dist/*
+sdist/*
+docs/api/*
+docs/_build/*
+cover/*
+MANIFEST

@@ -1,30 +1,23 @@
 #!/usr/bin/env python
-from setuptools import find_packages, setup
+# -*- coding: utf-8 -*-
+"""
+    Setup file for dsdev_utils.
 
-import versioneer
+    This file was generated with PyScaffold 2.5.11, a tool that easily
+    puts up a scaffold for your new Python project. Learn more under:
+    http://pyscaffold.readthedocs.org/
+"""
+
+import sys
+from setuptools import setup
 
 
-setup(
-    name='dsdev-utils',
-    version=versioneer.get_version(),
-    description='Various utility functions',
-    author='Digital Sapphire',
-    author_email='digitalsapphire@gmail.com',
-    url='https://github.com/JMSwag/dsdev-utils',
-    download_url=('https://github.com/JMSwag/dsdev'
-                  '-utils/archive/master.zip'),
-    license='MIT',
-    cmdclass=versioneer.get_cmdclass(),
-    install_requires=[
-        'chardet',
-        'six',
-        ],
-    packages=find_packages(),
-    classifiers=[
-        'Development Status :: 4 - Beta',
-        'Operating System :: OS Independent',
-        'Environment :: Console',
-        'Intended Audience :: Developers',
-        'License :: OSI Approved :: MIT License',
-        'Programming Language :: Python'],
-    )
+def setup_package():
+    needs_sphinx = {'build_sphinx', 'upload_docs'}.intersection(sys.argv)
+    sphinx = ['sphinx'] if needs_sphinx else []
+    setup(setup_requires=['six', 'pyscaffold>=2.5a0,<2.6a0'] + sphinx,
+          use_pyscaffold=True)
+
+
+if __name__ == "__main__":
+    setup_package()
