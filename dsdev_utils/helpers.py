@@ -25,6 +25,7 @@ import io
 import gzip
 import logging
 import sys
+from pathlib2 import Path
 
 log = logging.getLogger(__name__)
 
