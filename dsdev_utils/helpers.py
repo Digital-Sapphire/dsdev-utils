@@ -24,6 +24,7 @@
 import io
 import gzip
 import logging
+import re
 import sys
 from pathlib2 import Path
 
