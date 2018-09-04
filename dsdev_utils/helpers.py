@@ -104,7 +104,7 @@ class Version(object):
         return channels[self.channel_name]
 
     def _parse_string(self, version):
-        version = Path(ver).stem
+        version = Path(version).stem
         try:
             _data = self._parse_version(version)
             self.major = int(_data.get('MAJOR', 0) or 0)
