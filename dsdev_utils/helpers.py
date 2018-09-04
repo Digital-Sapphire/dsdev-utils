@@ -30,6 +30,16 @@ from pathlib2 import Path
 
 log = logging.getLogger(__name__)
 
+channels = OrderedDict()
+channels['daily'] = 0
+channels['alpha'] = 1
+channels['beta'] = 2
+channels['patch'] = 3
+channels['feature'] = 4
+channels['mandatory'] = 5
+channels['stable'] = 9
+channel_id = {x[:1]: x for x in channels.keys()}
+
 
 class Version(object):
 
