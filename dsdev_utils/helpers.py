@@ -27,7 +27,7 @@ import logging
 import re
 import sys
 from pathlib2 import Path
-from collections import OrderDictg
+from collections import OrderedDict
 
 log = logging.getLogger(__name__)
 
