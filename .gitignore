@@ -19,3 +19,4 @@ hash-test.txt
 
 dsdev_utils.egg-info
 coverage.xml
+.tox
