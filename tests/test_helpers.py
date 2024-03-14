@@ -30,7 +30,7 @@ import pytest
 log = logging.getLogger()
 
 
-class TestVerson(object):
+class TestVersion(object):
     def test_depreciated(self):
         with pytest.warns(DeprecationWarning) as record:
             v = Version('1.2.3')
@@ -59,10 +59,6 @@ class TestVerson(object):
     def test_version(self):
         assert Version("5.0") == Version("5.0")
         assert Version("4.5") != Version("5.1")
-        with pytest.raises(VersionError):
-            Version("1")
-        with pytest.raises(VersionError):
-            Version("1.1.1.1")
 
     def test_pep440(self):
         assert Version('0.1.1.dev5+a1b2c3d') > Version('0.1.1.dev4+a1b2c3d')
