@@ -23,7 +23,6 @@
 # ------------------------------------------------------------------------------
 import logging
 
-from dsdev_utils.exceptions import VersionError
 from dsdev_utils.helpers import EasyAccessDict, Version
 import pytest
 
