@@ -63,10 +63,3 @@ class STDError(Exception):
         if self.traceback is None:
             return None
         return "".join(traceback.format_tb(self.traceback))
-
-
-class VersionError(STDError):
-    """Raised for Utils exceptions"""
-
-    def __init__(self, *args, **kwargs):
-        super(VersionError, self).__init__(*args, **kwargs)

@@ -29,7 +29,6 @@ import sys
 from packaging.version import parse
 from deprecated import deprecated
 
-from dsdev_utils.exceptions import VersionError
 
 log = logging.getLogger(__name__)
 
