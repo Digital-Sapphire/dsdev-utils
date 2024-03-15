@@ -1,4 +1,4 @@
-name: PyUpdater Tests
+name: DS Dev Utils Tests
 
 on:
   push:
